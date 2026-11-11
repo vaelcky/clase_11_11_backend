@@ -1,0 +1,50 @@
+server:
+  port: ${PORT:${SERVER_PORT:8083}}
+
+spring:
+  application:
+    name: kanban-backend
+  datasource:
+    # Cambia el puerto/usuario/clave con variables de entorno si tu Postgres es distinto
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:kanban_db}?sslmode=${DB_SSL_MODE:prefer}
+    username: ${DB_USER:kanban}
+    password: ${DB_PASSWORD:kanban}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate      # el esquema lo crea Flyway, Hibernate solo lo valida
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+app:
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200}
+
+# -------------------------------------------------
+# LOGGING (SLF4J + Logback, ya incluidos en Spring Boot; sin Lombok)
+# -------------------------------------------------
+logging:
+  file:
+    name: logs/${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      file-name-pattern: ${LOG_FILE}.%d{yyyy-MM-dd}.%i
+      max-history: 7
+  level:
+    root: INFO
+    cl.ipss: ${LOG_LEVEL_APP:INFO}       # DEBUG agrega más detalle (p. ej. las respuestas 404/409)
+    org.springframework.web: INFO
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:INFO}  # en local pon LOG_LEVEL_SQL=DEBUG para ver el SQL
+    org.hibernate.type.descriptor.sql: INFO
+
+# Health check para Render: GET /actuator/health
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
